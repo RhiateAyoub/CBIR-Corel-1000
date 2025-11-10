@@ -5,14 +5,24 @@ import os
 import json
 import matplotlib.pyplot as plt
 
-def load_image(path, size=(256, 256)):
-    """Charge et redimensionne une image en RGB"""
+def load_image(path, size=(256, 256), color_space="RGB"):
+    """Charge, redimensionne et convertit une image vers l’espace de couleur choisi."""
     img = cv2.imread(path)
     if img is None:
         raise ValueError(f"Impossible de lire l'image : {path}")
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, size)
+
+    if color_space == "RGB":
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    elif color_space == "HSV":
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    elif color_space == "Lab":
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
+    else:
+        raise ValueError(f"Espace de couleur non supporté : {color_space}")
+    
     return img
+
 
 
 def compute_histogram(img, bins_per_channel=16):
@@ -102,8 +112,8 @@ def correlation_distance(h1, h2):
     return np.corrcoef(h1, h2)[0, 1]
 
 
-def search_similar_images(query_image_path, descriptors, dataset_dir="dataset", bins_per_channel=16,
-                          metric="hist_intersection", top_n=5):
+def search_similar_images(query_image_path, descriptors, bins_per_channel=16,
+                          metric="hist_intersection", color_space="RGB", top_n=5):
     """
     Recherche les images les plus similaires à l'image requête.
     - query_image_path : chemin de l'image requête
@@ -112,7 +122,7 @@ def search_similar_images(query_image_path, descriptors, dataset_dir="dataset", 
     - top_n : nombre d'images similaires à retourner
     """
     # Calcul du descripteur de l'image requête
-    query_img = load_image(query_image_path)
+    query_img = load_image(query_image_path, color_space=color_space)
     query_desc = compute_histogram(query_img, bins_per_channel=bins_per_channel)
 
     # Sélection de la distance
