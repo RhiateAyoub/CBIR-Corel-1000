@@ -24,28 +24,46 @@ def load_image(path, size=(256, 256), color_space="RGB"):
 
 
 
-def compute_histogram(img, bins_per_channel=16):
+def compute_histogram(img, bins_per_channel=16, color_space="RGB"):
     """
-    Calcule l'histogramme réduit (histobine) d'une image RGB.
+    Calcule un histogramme réduit (histobine) pour chaque canal de l'image
+    dans l'espace de couleur spécifié.
+    
     Retourne un vecteur de taille 3 * bins_per_channel.
     """
+
+    # --- Conversion d’espace couleur ---
+    if color_space == "HSV":
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    elif color_space == "Lab":
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2Lab)
+    # sinon RGB → pas de conversion
+
     descriptor = []
-    for channel in range(3):  # R, G, B
+
+    for channel in range(3):  # 3 canaux (R,G,B ou H,S,V ou L,a,b)
+        # Histogramme complet sur 256 niveaux
         hist = cv2.calcHist([img], [channel], None, [256], [0, 256])
         hist = hist.flatten()
-        # Normalisation
-        hist /= hist.sum()
 
-        # Regroupement en bins
+        # Normalisation
+        if hist.sum() != 0:
+            hist /= hist.sum()
+
+        # --- Regroupement en "bins" (histobines) ---
         step = 256 // bins_per_channel
         hist_binned = np.add.reduceat(hist, np.arange(0, 256, step))
-        hist_binned /= hist_binned.sum()
+
+        # Normalisation finale
+        if hist_binned.sum() != 0:
+            hist_binned /= hist_binned.sum()
+
         descriptor.extend(hist_binned.tolist())
 
     return np.array(descriptor, dtype=np.float32)
 
 
-def index_dataset(dataset_dir="dataset", bins_per_channel=16, output_file="descriptors.json"):
+def index_dataset(dataset_dir="dataset", bins_per_channel=16, color_space="RGB", output_file="descriptors.json"):
     """
     Parcourt récursivement toutes les images dans dataset/ et ses sous-dossiers,
     calcule leurs descripteurs, puis les sauvegarde dans un fichier JSON.
@@ -66,7 +84,7 @@ def index_dataset(dataset_dir="dataset", bins_per_channel=16, output_file="descr
         filename = os.path.relpath(img_path, dataset_dir)  # Chemin relatif
         try:
             img = load_image(img_path)
-            desc = compute_histogram(img, bins_per_channel=bins_per_channel)
+            desc = compute_histogram(img, bins_per_channel, color_space)
             descriptors[filename] = desc.tolist()
         except Exception as e:
             print(f"[ERREUR] {filename}: {e}")
@@ -122,7 +140,7 @@ def search_similar_images(query_image_path, descriptors, bins_per_channel=16,
     """
     # Calcul du descripteur de l'image requête
     query_img = load_image(query_image_path, color_space=color_space)
-    query_desc = compute_histogram(query_img, bins_per_channel=bins_per_channel)
+    query_desc = compute_histogram(query_img, bins_per_channel, color_space)
 
     # Sélection de la distance
     if metric == "hist_intersection":

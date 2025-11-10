@@ -35,7 +35,7 @@ metric = st.sidebar.selectbox(
 top_n = st.sidebar.slider("Nombre d'images à afficher :", 3, 10, 5)
 
 # Sélection automatique du fichier JSON selon les bins
-json_file = f"descriptors_{bins}.json"
+json_file = f"descriptors_{color_space}_{bins}.json"
 json_path = os.path.join(os.path.dirname(__file__), json_file)
 
 if not os.path.exists(json_path):
