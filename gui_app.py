@@ -1,4 +1,3 @@
-# gui_app.py
 import streamlit as st
 from utils import (
     load_descriptors,
@@ -60,7 +59,7 @@ if uploaded_file is not None:
     query_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     query_img = cv2.cvtColor(query_img, cv2.COLOR_BGR2RGB)
 
-    st.image(query_img, caption="Image requête", use_column_width=True)
+    st.image(query_img, caption="Image requête", use_container_width=False)
 
     # ================================
     # LANCEMENT DE LA RECHERCHE
