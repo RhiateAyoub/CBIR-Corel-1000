@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import os
 import json
+import matplotlib.pyplot as plt
 
 def load_image(path, size=(256, 256)):
     """Charge et redimensionne une image en RGB"""
@@ -69,3 +70,100 @@ def index_dataset(dataset_dir="dataset", bins_per_channel=16, output_file="descr
         json.dump(descriptors, f, indent=4)
 
     print(f"[SUCCÈS] Descripteurs enregistrés dans '{output_file}' ({len(descriptors)} images indexées).")
+
+
+# ================================
+#   PHASE 2 : RECHERCHE D’IMAGES
+# ================================
+
+def load_descriptors(file_path="descriptors.json"):
+    """Charge le fichier JSON contenant les descripteurs."""
+    with open(file_path, "r") as f:
+        return json.load(f)
+
+
+def histogram_intersection(h1, h2):
+    """Distance de Swain & Ballard (Histogram Intersection)"""
+    return np.sum(np.minimum(h1, h2)) / np.sum(h1)
+
+
+def euclidean_distance(h1, h2):
+    """Distance Euclidienne"""
+    return np.linalg.norm(h1 - h2)
+
+
+def chi_square_distance(h1, h2):
+    """Distance Chi²"""
+    return 0.5 * np.sum(((h1 - h2) ** 2) / (h1 + h2 + 1e-10))
+
+
+def correlation_distance(h1, h2):
+    """Distance basée sur la corrélation"""
+    return np.corrcoef(h1, h2)[0, 1]
+
+
+def search_similar_images(query_image_path, descriptors, dataset_dir="dataset", bins_per_channel=16,
+                          metric="hist_intersection", top_n=5):
+    """
+    Recherche les images les plus similaires à l'image requête.
+    - query_image_path : chemin de l'image requête
+    - descriptors : dictionnaire chargé depuis descriptors.json
+    - metric : 'hist_intersection', 'euclidean', 'chi2', 'correlation'
+    - top_n : nombre d'images similaires à retourner
+    """
+    # Calcul du descripteur de l'image requête
+    query_img = load_image(query_image_path)
+    query_desc = compute_histogram(query_img, bins_per_channel=bins_per_channel)
+
+    # Sélection de la distance
+    if metric == "hist_intersection":
+        distance_func = histogram_intersection
+        reverse = True  # Plus la valeur est grande, plus c’est similaire
+    elif metric == "euclidean":
+        distance_func = euclidean_distance
+        reverse = False  # Plus la valeur est petite, plus c’est similaire
+    elif metric == "chi2":
+        distance_func = chi_square_distance
+        reverse = False
+    elif metric == "correlation":
+        distance_func = correlation_distance
+        reverse = True
+    else:
+        raise ValueError(f"Métrique inconnue : {metric}")
+
+    # Calcul de la similarité avec chaque image
+    results = []
+    for img_name, desc in descriptors.items():
+        desc_np = np.array(desc, dtype=np.float32)
+        score = distance_func(query_desc, desc_np)
+        results.append((img_name, score))
+
+    # Tri selon la mesure choisie
+    results.sort(key=lambda x: x[1], reverse=reverse)
+
+    # Retourne les top_n images les plus proches
+    return results[:top_n]
+
+
+def display_results(query_image_path, results, dataset_dir="dataset"):
+    """Affiche l’image requête et les top résultats."""
+    plt.figure(figsize=(12, 6))
+
+    # Affiche l'image requête
+    query_img = load_image(query_image_path)
+    plt.subplot(2, 3, 1)
+    plt.imshow(query_img)
+    plt.title("Image requête")
+    plt.axis("off")
+
+    # Affiche les résultats
+    for i, (img_name, score) in enumerate(results, 1):
+        img_path = os.path.join(dataset_dir, img_name)
+        img = load_image(img_path)
+        plt.subplot(2, 3, i + 1)
+        plt.imshow(img)
+        plt.title(f"{img_name}\nScore: {score:.3f}")
+        plt.axis("off")
+
+    plt.tight_layout()
+    plt.show()
