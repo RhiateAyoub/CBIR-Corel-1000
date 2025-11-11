@@ -43,7 +43,7 @@ mini_projet_CBIR/
 
 ### 1. Cloner le projet
 ```bash
-git clone https://github.com/<ton-username>/mini_projet_CBIR.git
+git clone https://github.com/RhiateAyoub/CBIR-Corel-1000.git
 cd mini_projet_CBIR
 ```
 ### 2. Installer les dépendances
