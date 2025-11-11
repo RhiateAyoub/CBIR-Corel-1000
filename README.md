@@ -46,7 +46,7 @@ mini_projet_CBIR/
 git clone https://github.com/<ton-username>/mini_projet_CBIR.git
 cd mini_projet_CBIR
 ```
-2. Installer les dépendances
+### 2. Installer les dépendances
 ```bash
 pip install -r requirements.txt
 (ou installe manuellement si tu n’as pas encore le fichier)
