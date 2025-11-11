@@ -49,10 +49,6 @@ cd mini_projet_CBIR
 ### 2. Installer les dépendances
 ```bash
 pip install -r requirements.txt
-(ou installe manuellement si tu n’as pas encore le fichier)
-```
-```bash
-pip install opencv-python numpy matplotlib streamlit
 ```
 ## 🚀 Utilisation
 ### 🔹 1. Phase d’indexation
@@ -60,7 +56,6 @@ Génère les descripteurs de couleur pour le dataset :
 ```bash
 python index_dataset.py
 ```
-Les fichiers .json produits sont enregistrés dans le dossier descriptors/.
 
 ### 🔹 2. Phase de recherche (avec GUI)
 Lancer l’application graphique :
